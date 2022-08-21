@@ -18,7 +18,7 @@ pub trait Messenger: Sync + Send {
     async fn new(config: MessengerConfig) -> Result<Self, MessengerError>
     where
         Self: Sized;
-    fn messenger_type(&self) -> MessengerType;
+
     async fn add_stream(&mut self, stream_key: &'static str) -> Result<(), MessengerError>;
     async fn set_buffer_size(&mut self, stream_key: &'static str, max_buffer_size: usize);
     async fn send(&mut self, stream_key: &'static str, bytes: &[u8]) -> Result<(), MessengerError>;
@@ -26,40 +26,8 @@ pub trait Messenger: Sync + Send {
         -> Result<Vec<(i64, &[u8])>, MessengerError>;
 }
 
-pub async fn select_messenger(
-    config: MessengerConfig,
-) -> Result<Box<dyn Messenger>, MessengerError> {
-    match config.messenger_type {
-        #[cfg(feature = "pulsar")]
-        MessengerType::Pulsar => {
-            PulsarMessenger::new(config).await.map(|a| Box::new(a) as Box<dyn Messenger>)
-        }
-        #[cfg(feature = "redis")]
-        MessengerType::Redis => {
-            RedisMessenger::new(config).await.map(|a| Box::new(a) as Box<dyn Messenger>)
-        }
-        _ => Err(MessengerError::ConfigurationError {
-            msg: "This Messenger type is not valid, unimplemented or you dont have the right crate features on.".to_string()
-        })
-    }
-}
-
-#[derive(Deserialize, Debug, PartialEq)]
-pub enum MessengerType {
-    Redis,
-    Pulsar,
-    Invalid,
-}
-
-impl Default for MessengerType {
-    fn default() -> Self {
-        MessengerType::Redis
-    }
-}
-
 #[derive(Deserialize, Debug, Default, PartialEq)]
 pub struct MessengerConfig {
-    pub messenger_type: MessengerType,
     pub connection_config: Dict,
 }
 
@@ -71,7 +39,7 @@ impl MessengerConfig {
 
 #[cfg(test)]
 mod tests {
-    use crate::{MessengerConfig, MessengerType};
+    use crate::MessengerConfig;
     use figment::providers::Env;
     use figment::value::Dict;
     use figment::{Figment, Jail};
@@ -97,7 +65,6 @@ mod tests {
             assert_eq!(
                 config.messenger_config,
                 MessengerConfig {
-                    messenger_type: MessengerType::Redis,
                     connection_config: expected_dict,
                 }
             );

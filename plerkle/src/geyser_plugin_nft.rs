@@ -15,15 +15,14 @@ use {
     flatbuffers::FlatBufferBuilder,
     log::*,
     plerkle_messenger::MessengerConfig,
-    plerkle_messenger::{
-        select_messenger, Messenger, ACCOUNT_STREAM, BLOCK_STREAM, SLOT_STREAM, TRANSACTION_STREAM,
-    },
+    plerkle_messenger::{Messenger, ACCOUNT_STREAM, BLOCK_STREAM, SLOT_STREAM, TRANSACTION_STREAM},
     serde::Deserialize,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPlugin, GeyserPluginError, ReplicaAccountInfoVersions, ReplicaBlockInfoVersions,
         ReplicaTransactionInfoVersions, Result, SlotStatus,
     },
     solana_sdk::{message::AccountKeys, pubkey::Pubkey},
+    std::marker::PhantomData,
     std::net::UdpSocket,
     std::{
         fmt::{Debug, Formatter},
@@ -43,13 +42,13 @@ struct SerializedData<'a> {
     builder: FlatBufferBuilder<'a>,
 }
 
-#[derive(Default)]
-pub(crate) struct Plerkle<'a> {
+pub struct Plerkle<'a, T> {
     runtime: Option<Runtime>,
     accounts_selector: Option<AccountsSelector>,
     transaction_selector: Option<TransactionSelector>,
     sender: Option<Sender<SerializedData<'a>>>,
     started_at: Option<Instant>,
+    phantom: PhantomData<fn() -> T>,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
@@ -58,9 +57,16 @@ pub struct PluginConfig {
     pub config_reload_ttl: Option<i64>,
 }
 
-impl<'a> Plerkle<'a> {
+impl<'a, T> Plerkle<'a, T> {
     pub fn new() -> Self {
-        Self::default()
+        Plerkle {
+            runtime: None,
+            accounts_selector: None,
+            transaction_selector: None,
+            sender: None,
+            started_at: None,
+            phantom: PhantomData,
+        }
     }
 
     fn create_accounts_selector_from_config(config: &serde_json::Value) -> AccountsSelector {
@@ -152,13 +158,16 @@ impl<'a> Plerkle<'a> {
     }
 }
 
-impl<'a> Debug for Plerkle<'a> {
+impl<'a, T> Debug for Plerkle<'a, T> {
     fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
         Ok(())
     }
 }
 
-impl GeyserPlugin for Plerkle<'static> {
+impl<T> GeyserPlugin for Plerkle<'static, T>
+where
+    T: Messenger + 'static,
+{
     fn name(&self) -> &'static str {
         "Plerkle"
     }
@@ -223,21 +232,24 @@ impl GeyserPlugin for Plerkle<'static> {
             })?;
         runtime.spawn(async move {
             // Create new Messenger connection.
-            if let Ok(mut messenger) = select_messenger(config.messenger_config).await {
-                messenger.add_stream(ACCOUNT_STREAM).await;
-                messenger.add_stream(SLOT_STREAM).await;
-                messenger.add_stream(TRANSACTION_STREAM).await;
-                messenger.add_stream(BLOCK_STREAM).await;
-                messenger.set_buffer_size(ACCOUNT_STREAM, 5000).await;
-                messenger.set_buffer_size(SLOT_STREAM, 5000).await;
-                messenger.set_buffer_size(TRANSACTION_STREAM, 500000).await;
-                messenger.set_buffer_size(BLOCK_STREAM, 5000).await;
+            let mut messenger = T::new(config.messenger_config)
+                .await
+                .map(|a| Box::new(a) as Box<dyn Messenger>)
+                .expect("todo: proper error handling");
 
-                // Receive messages in a loop as long as at least one Sender is in scope.
-                while let Some(data) = receiver.recv().await {
-                    let bytes = data.builder.finished_data();
-                    let _ = messenger.send(data.stream, bytes).await;
-                }
+            messenger.add_stream(ACCOUNT_STREAM).await;
+            messenger.add_stream(SLOT_STREAM).await;
+            messenger.add_stream(TRANSACTION_STREAM).await;
+            messenger.add_stream(BLOCK_STREAM).await;
+            messenger.set_buffer_size(ACCOUNT_STREAM, 5000).await;
+            messenger.set_buffer_size(SLOT_STREAM, 5000).await;
+            messenger.set_buffer_size(TRANSACTION_STREAM, 500000).await;
+            messenger.set_buffer_size(BLOCK_STREAM, 5000).await;
+
+            // Receive messages in a loop as long as at least one Sender is in scope.
+            while let Some(data) = receiver.recv().await {
+                let bytes = data.builder.finished_data();
+                let _ = messenger.send(data.stream, bytes).await;
             }
         });
 
@@ -415,15 +427,4 @@ impl GeyserPlugin for Plerkle<'static> {
     fn transaction_notifications_enabled(&self) -> bool {
         true
     }
-}
-
-#[no_mangle]
-#[allow(improper_ctypes_definitions)]
-/// # Safety
-///
-/// This function returns the GeyserPluginPostgres pointer as trait GeyserPlugin.
-pub unsafe extern "C" fn _create_plugin() -> *mut dyn GeyserPlugin {
-    let plugin = Plerkle::new();
-    let plugin: Box<dyn GeyserPlugin> = Box::new(plugin);
-    Box::into_raw(plugin)
 }

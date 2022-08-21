@@ -1825,6 +1825,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "msg_pulsar"
+version = "0.1.0"
+dependencies = [
+ "async-mutex",
+ "async-trait",
+ "futures",
+ "log",
+ "metaplex-pulsar",
+ "plerkle",
+ "plerkle_messenger",
+ "solana-geyser-plugin-interface",
+]
+
+[[package]]
+name = "msg_redis"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "log",
+ "plerkle",
+ "plerkle_messenger",
+ "redis",
+ "solana-geyser-plugin-interface",
+]
+
+[[package]]
 name = "multimap"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2247,14 +2273,10 @@ dependencies = [
 name = "plerkle_messenger"
 version = "0.0.1"
 dependencies = [
- "async-mutex",
  "async-trait",
  "figment",
- "futures",
  "log",
- "metaplex-pulsar",
  "plerkle_serialization 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "redis",
  "serde",
  "solana-geyser-plugin-interface",
  "thiserror",

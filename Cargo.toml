@@ -1,5 +1,7 @@
 [workspace]
 members = [
+    "msg_pulsar",
+    "msg_redis",
     "plerkle",
     "plerkle_messenger",
     "plerkle_serialization",
