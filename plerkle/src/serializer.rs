@@ -1,5 +1,5 @@
 use {
-    chrono::{Utc},
+    chrono::Utc,
     flatbuffers::FlatBufferBuilder,
     plerkle_serialization::{
         account_info_generated::account_info::{AccountInfo, AccountInfoArgs},

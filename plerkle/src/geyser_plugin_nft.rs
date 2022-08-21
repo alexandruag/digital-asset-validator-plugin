@@ -16,8 +16,7 @@ use {
     log::*,
     plerkle_messenger::MessengerConfig,
     plerkle_messenger::{
-        select_messenger,
-        Messenger, ACCOUNT_STREAM, BLOCK_STREAM, SLOT_STREAM, TRANSACTION_STREAM,
+        select_messenger, Messenger, ACCOUNT_STREAM, BLOCK_STREAM, SLOT_STREAM, TRANSACTION_STREAM,
     },
     serde::Deserialize,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -33,9 +32,9 @@ use {
     },
     tokio::{
         self as tokio,
-        time::Instant,
         runtime::{Builder, Runtime},
         sync::mpsc::{self as mpsc, Sender},
+        time::Instant,
     },
 };
 

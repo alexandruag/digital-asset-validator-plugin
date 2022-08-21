@@ -1,4 +1,5 @@
 #![cfg(feature = "redis")]
+use crate::MessengerType;
 use {
     crate::{error::MessengerError, Messenger, MessengerConfig},
     async_trait::async_trait,
@@ -14,7 +15,6 @@ use {
         pin::Pin,
     },
 };
-use crate::MessengerType;
 
 // Redis stream values.
 pub const GROUP_NAME: &str = "plerkle";

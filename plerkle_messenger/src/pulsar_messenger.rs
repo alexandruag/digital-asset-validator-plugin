@@ -1,4 +1,5 @@
 #![cfg(feature = "pulsar")]
+use crate::MessengerType;
 use {
     crate::{error::MessengerError, Messenger, MessengerConfig},
     async_mutex::Mutex,
@@ -16,7 +17,6 @@ use {
         fmt::{Debug, Formatter},
     },
 };
-use crate::MessengerType;
 
 #[derive(Default)]
 pub struct PulsarMessenger {
