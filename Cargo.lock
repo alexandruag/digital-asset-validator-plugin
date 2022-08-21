@@ -2278,6 +2278,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "plerkle_shim"
+version = "0.1.0"
+dependencies = [
+ "libloading",
+ "solana-geyser-plugin-interface",
+]
+
+[[package]]
 name = "polling"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

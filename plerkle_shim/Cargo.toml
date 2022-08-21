@@ -1,0 +1,11 @@
+[package]
+name = "plerkle_shim"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+#crate-type = ["cdylib"]
+
+[dependencies]
+libloading = "0.7.3"
+solana-geyser-plugin-interface = { version = "1.11.3" }
