@@ -1,0 +1,18 @@
+[package]
+name = "msg_pulsar"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+async-mutex = "1.4.0"
+async-trait = "0.1.53"
+futures = "0.3"
+log = "0.4.11"
+metaplex-pulsar = { version = "4.1.1" }
+solana-geyser-plugin-interface = { version = "1.11.3" }
+
+plerkle = { path = "../plerkle" }
+plerkle_messenger = { path = "../plerkle_messenger" }

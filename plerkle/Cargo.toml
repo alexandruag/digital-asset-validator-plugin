@@ -8,9 +8,6 @@ license = "AGPL-3.0"
 edition = "2021"
 readme = "Readme.md"
 
-[lib]
-crate-type = ["cdylib", "rlib"]
-
 [dependencies]
 log = "0.4.11"
 async-trait = "0.1.53"

@@ -1,14 +1,14 @@
-#![cfg(feature = "redis")]
-use crate::MessengerType;
 use {
-    crate::{error::MessengerError, Messenger, MessengerConfig},
     async_trait::async_trait,
     log::*,
+    plerkle::geyser_plugin_nft::Plerkle,
+    plerkle_messenger::{error::MessengerError, Messenger, MessengerConfig},
     redis::{
         aio::AsyncStream,
         streams::{StreamId, StreamKey, StreamMaxlen, StreamReadOptions, StreamReadReply},
         AsyncCommands, RedisResult, Value,
     },
+    solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPlugin,
     std::{
         collections::HashMap,
         fmt::{Debug, Formatter},
@@ -58,10 +58,6 @@ impl Messenger for RedisMessenger {
             streams: HashMap::<&'static str, RedisMessengerStream>::default(),
             stream_read_reply: StreamReadReply::default(),
         })
-    }
-
-    fn messenger_type(&self) -> MessengerType {
-        MessengerType::Redis
     }
 
     async fn add_stream(&mut self, stream_key: &'static str) -> Result<(), MessengerError> {
@@ -189,4 +185,15 @@ impl Debug for RedisMessenger {
     fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
         Ok(())
     }
+}
+
+#[no_mangle]
+#[allow(improper_ctypes_definitions)]
+/// # Safety
+///
+/// This function returns the GeyserPluginPostgres pointer as trait GeyserPlugin.
+pub unsafe extern "C" fn _create_plugin() -> *mut dyn GeyserPlugin {
+    let plugin = Plerkle::<RedisMessenger>::new();
+    let plugin: Box<dyn GeyserPlugin> = Box::new(plugin);
+    Box::into_raw(plugin)
 }

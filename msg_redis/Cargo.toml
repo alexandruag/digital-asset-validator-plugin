@@ -1,0 +1,16 @@
+[package]
+name = "msg_redis"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+async-trait = "0.1.53"
+log = "0.4.11"
+redis = { version = "0.21.5", features = ["aio", "tokio-comp", "streams"] }
+solana-geyser-plugin-interface = { version = "1.11.3" }
+
+plerkle = { path = "../plerkle" }
+plerkle_messenger = { path = "../plerkle_messenger" }

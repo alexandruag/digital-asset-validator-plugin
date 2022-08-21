@@ -1,7 +1,4 @@
-#![cfg(feature = "pulsar")]
-use crate::MessengerType;
 use {
-    crate::{error::MessengerError, Messenger, MessengerConfig},
     async_mutex::Mutex,
     async_trait::async_trait,
     futures::TryStreamExt,
@@ -11,6 +8,9 @@ use {
         consumer::Message,
         Authentication, Consumer, Producer, Pulsar, TokioExecutor,
     },
+    plerkle::geyser_plugin_nft::Plerkle,
+    plerkle_messenger::{error::MessengerError, Messenger, MessengerConfig},
+    solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPlugin,
     std::sync::Arc,
     std::{
         collections::HashMap,
@@ -100,10 +100,6 @@ impl Messenger for PulsarMessenger {
             acquired_messages: HashMap::<&'static str, Vec<Message<Vec<u8>>>>::default(),
             create_consumer_by_default,
         })
-    }
-
-    fn messenger_type(&self) -> MessengerType {
-        MessengerType::Pulsar
     }
 
     /// Create new Producer for Pulsar topic
@@ -301,4 +297,15 @@ impl Debug for PulsarMessenger {
     fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
         Ok(())
     }
+}
+
+#[no_mangle]
+#[allow(improper_ctypes_definitions)]
+/// # Safety
+///
+/// This function returns the GeyserPluginPostgres pointer as trait GeyserPlugin.
+pub unsafe extern "C" fn _create_plugin() -> *mut dyn GeyserPlugin {
+    let plugin = Plerkle::<PulsarMessenger>::new();
+    let plugin: Box<dyn GeyserPlugin> = Box::new(plugin);
+    Box::into_raw(plugin)
 }
