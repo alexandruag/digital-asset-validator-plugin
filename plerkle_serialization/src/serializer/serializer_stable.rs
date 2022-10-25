@@ -84,6 +84,8 @@ pub fn serialize_transaction<'a>(
     let account_keys = transaction_info.transaction.message().account_keys();
     let account_keys_len = account_keys.len();
 
+    println!("AAAASDF {}", account_keys_len);
+
     let account_keys = if account_keys_len > 0 {
         let mut account_keys_fb_vec = Vec::with_capacity(account_keys_len);
         for key in account_keys.iter() {
